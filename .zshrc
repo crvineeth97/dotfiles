@@ -23,12 +23,15 @@ fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # Download fzf if it's not there yet
-if [ ! -d "$HOME/.fzf" ]; then
+if [ ! -f "$HOME/.fzf/bin/fzf" ]; then
   git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
   ~/.fzf/install --no-key-bindings --completion --update-rc --no-bash --no-fish
 fi
 
 # Download zoxide if it's not there yet
+if [[ ! "$PATH" == *$HOME/.local/bin* ]]; then
+  PATH="${PATH:+${PATH}:}$HOME/.local/bin"
+fi
 if ! which zoxide > /dev/null; then
   curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 fi
@@ -87,7 +90,6 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Aliases
 alias ls='ls --color'
-alias vim='nvim'
 alias c='clear'
 
 # Shell integrations
