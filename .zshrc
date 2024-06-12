@@ -87,6 +87,8 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # Aliases
 alias ls='ls --color'
 alias c='clear'
+alias update="sudo apt update -y && sudo apt upgrade -y && sudo apt autoclean && sudo apt autoremove"
+alias python="python3"
 
 # Shell integrations
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
