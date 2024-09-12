@@ -17,7 +17,7 @@
 
   # The home.packages option allows you to install Nix packages into your
   # environment.
-  home.packages = [
+  home.packages = with pkgs; [
     # # Adds the 'hello' command to your environment. It prints a friendly
     # # "Hello, world!" when run.
     # pkgs.hello
@@ -34,6 +34,7 @@
     # (pkgs.writeShellScriptBin "my-hello" ''
     #   echo "Hello, ${config.home.username}!"
     # '')
+    nil
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -71,6 +72,12 @@
     # EDITOR = "emacs";
   };
 
+  # Allow unfree packages
+  nixpkgs.config = {
+    allowUnfree = true;
+    allowUnfreePredicate = (_: true);
+  };
+
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
@@ -78,5 +85,23 @@
     enable = true;
     userName = "Vineeth Chelur";
     userEmail = "crvineeth97@gmail.com";
+  };
+
+  programs.vscode = {
+    enable = true;
+    extensions = with pkgs.vscode-extensions; [
+      davidanson.vscode-markdownlint
+      codezombiech.gitignore
+      eamodio.gitlens
+      donjayamanne.githistory
+      mhutchie.git-graph
+      github.copilot
+      alefragnani.project-manager
+      ms-vscode-remote.remote-ssh
+      ms-vscode-remote.remote-containers
+      tomoki1207.pdf
+      ms-python.python
+      ms-python.black-formatter
+    ];
   };
 }
