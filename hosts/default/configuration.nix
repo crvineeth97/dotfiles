@@ -6,9 +6,11 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
       inputs.home-manager.nixosModules.default
+      ../../modules/nixos/keyd.nix
     ];
 
   # Bootloader.
@@ -18,7 +20,7 @@
   networking.hostName = "urvi"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ]; 
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -86,7 +88,7 @@
     description = "Vineeth Chelur";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
@@ -135,10 +137,10 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-    services.openssh.enable = true;
+  services.openssh.enable = true;
 
   # Enable docker
-    virtualisation.docker.enable = true;
+  virtualisation.docker.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

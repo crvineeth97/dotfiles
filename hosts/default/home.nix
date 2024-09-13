@@ -35,6 +35,7 @@
     #   echo "Hello, ${config.home.username}!"
     # '')
     nil
+    nixpkgs-fmt
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -102,6 +103,7 @@
       tomoki1207.pdf
       ms-python.python
       ms-python.black-formatter
+      jnoortheen.nix-ide
     ];
   };
 }
