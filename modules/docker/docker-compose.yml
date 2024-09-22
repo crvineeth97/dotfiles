@@ -1,0 +1,192 @@
+---
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr
+    container_name: bazarr
+    volumes:
+      - ~/services/jellyfin/bazarr:/config
+      - ~/services/jellyfin/data:/data
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    volumes:
+      - ~/services/gluetun:/gluetun
+    environment:
+      # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - VPN_TYPE=wireguard
+      # Wireguard:
+      - WIREGUARD_PRIVATE_KEY=${GLUETUN_WIREGUARD_PRIVATE_KEY}
+      - SERVER_HOSTNAMES=${GLUETUN_SERVER_HOSTNAMES}
+      # Timezone for accurate log times
+      - TZ=${TZ}
+      # Server list updater
+      # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
+      # - UPDATER_PERIOD=24h
+      # Disable DNS over TLS
+      # - DOT=off
+      # - FIREWALL_VPN_INPUT_PORTS=6881,6969,51413
+      # - FIREWALL_OUTBOUND_SUBNETS=0.0.0.0/0
+      # - FIREWALL_DEBUG=on
+    ports:
+      - '5055:5055' # jellyseerr
+      - '6767:6767' # bazarr
+      - '6881:6881'
+      - '6881:6881/udp'
+      - '7878:7878' # radarr
+      # - '8000:8000/tcp' # Build-in HTTP control header
+      - '8085:8085' # qbittorrent
+      - '8096:8096' # jellyfin
+      # - '8388:8388/tcp' # Shadowsocks
+      # - '8388:8388/udp' # Shadowsocks
+      # - '8888:8888/tcp' # HTTP proxy
+      - '8989:8989' # Sonarr
+      - '9696:9696' # Prowlarr
+    restart: always
+    # networks:
+    #   - vpn
+    # healthcheck:
+    #   test: ping -c 1 www.google.com || exit 1
+    #   interval: 60s
+    #   timeout: 20s
+    #   retries: 5
+    cap_add:
+      - NET_ADMIN
+    # devices:
+    #   - /dev/net/tun:/dev/net/tun
+
+  homarr:
+    image: ghcr.io/ajnart/homarr:latest
+    container_name: homarr
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/services/homarr/configs:/app/data/configs
+      - ~/services/homarr/icons:/app/public/icons
+      - ~/services/homarr/data:/data
+    ports:
+      - '7575:7575'
+    restart: unless-stopped
+
+  # homeassistant:
+  #   image: ghcr.io/home-assistant/home-assistant:stable
+  #   container_name: homeassistant
+  #   volumes:
+  #     - ~/services/homeassistant/conifg:/config
+  #     - /run/dbus:/run/dbus:ro
+  #   ports:
+  #     - '8123:8123'
+  #   restart: unless-stopped
+  #   privileged: true
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    volumes:
+      - ~/services/jellyfin/conifg:/config
+      - ~/services/jellyfin/cache:/cache
+      - source: ~/services/jellyfin/data/media
+        target: /media
+        type: bind
+    environment:
+      - TZ=${TZ}
+    # ports:
+    #   - '8096:8096'
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+    user: ${UID}:${GID}
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr
+    container_name: jellyseerr
+    volumes:
+      - ~/services/jellyfin/jellyseerr:/app/config
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole
+    container_name: pihole
+    volumes:
+      - ~/services/pihole/etc-pihole:/etc/pihole
+      - ~/services/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    environment:
+      TZ: ${TZ}
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+      - '67:67/udp'
+      - '80:80/tcp'
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr
+    container_name: prowlarr
+    volumes:
+      - ~/services/jellyfin/prowlarr:/config
+      - ~/services/jellyfin/data/torrents:/data/torrents:rw
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:libtorrentv1
+    container_name: qbittorrent
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ~/services/jellyfin/qbittorrent:/config
+      - ~/services/jellyfin/data/torrents:/data/torrents
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+      - WEBUI_PORT=8085
+    # ports:
+    #   - 8085:8085
+    network_mode: 'service:gluetun'
+    restart: always
+
+  radarr:
+    image: lscr.io/linuxserver/radarr
+    container_name: radarr
+    volumes:
+      - ~/services/jellyfin/radarr:/config
+      - ~/services/jellyfin/data:/data
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr
+    container_name: sonarr
+    volumes:
+      - ~/services/jellyfin/sonarr:/config
+      - ~/services/jellyfin/data:/data
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
