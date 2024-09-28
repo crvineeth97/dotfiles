@@ -1,0 +1,17 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server
+    container_name: vaultwarden
+    volumes:
+      - /root/services/vaultwarden/data:/data
+    environment:
+      - TZ=${TZ}
+      - SIGNUPS_ALLOWED=true
+    ports:
+      - 9666:80
+    networks:
+      - network_default
+    restart: unless-stopped
+networks:
+  network_default:
+    external: true

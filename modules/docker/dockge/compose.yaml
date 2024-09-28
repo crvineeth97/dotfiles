@@ -1,0 +1,20 @@
+name: dockge
+services:
+  dockge:
+    image: louislam/dockge
+    restart: unless-stopped
+    ports:
+      - 5001:5001
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/services/dockge/data:/app/data
+      - /home/vineeth/dotfiles/modules/docker:/home/vineeth/dotfiles/modules/docker
+    environment:
+      # Tell Dockge where to find the stacks
+      - DOCKGE_STACKS_DIR=/home/vineeth/dotfiles/modules/docker
+    networks:
+      - network_default
+
+networks:
+  network_default:
+    external: true

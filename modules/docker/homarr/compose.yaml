@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  homarr:
+    image: ghcr.io/ajnart/homarr:latest
+    container_name: homarr
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/services/homarr/configs:/app/data/configs
+      - /root/services/homarr/icons:/app/public/icons
+      - /root/services/homarr/data:/data
+    ports:
+      - 7575:7575
+    networks:
+      - network_default
+    restart: unless-stopped
+networks:
+  network_default:
+    external: true

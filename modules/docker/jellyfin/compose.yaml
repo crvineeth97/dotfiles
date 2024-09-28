@@ -1,0 +1,216 @@
+version: "3.8"
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr
+    container_name: bazarr
+    volumes:
+      - /root/services/jellyfin/bazarr:/config
+      - /data:/data
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '6767:6767'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr
+    container_name: flaresolverr
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '8191:8191'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    volumes:
+      - /root/services/jellyfin/conifg:/config
+      - /root/services/jellyfin/cache:/cache
+      - source: /data/media
+        target: /media
+        type: bind
+    environment:
+      - TZ=${TZ}
+    ports:
+      - 5055:5055 # jellyseerr
+      - 6500:6500 # rdtclient
+      - 6767:6767 # bazarr
+      - 7878:7878 # radarr
+      - 8096:8096 # jellyfin
+      - 8191:8191 # flaresolverr
+      - 8989:8989 # sonarr
+      - 9696:9696 # prowlarr
+    restart: unless-stopped
+    networks:
+      - network_default
+    user: ${UID}:${GID}
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+  jellyseerr:
+    image: fallenbagel/jellyseerr
+    container_name: jellyseerr
+    volumes:
+      - /root/services/jellyfin/jellyseerr:/app/config
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '5055:5055'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr
+    container_name: prowlarr
+    volumes:
+      - /root/services/jellyfin/prowlarr:/config
+      - /data/torrents:/data/torrents
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '9696:9696'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+  radarr:
+    image: lscr.io/linuxserver/radarr
+    container_name: radarr
+    volumes:
+      - /root/services/jellyfin/radarr:/config
+      - /data:/data
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '7878:7878'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+  rdtclient:
+    image: rogerfar/rdtclient
+    container_name: rdtclient
+    volumes:
+      - /root/services/jellyfin/rdtclient:/data/db
+      - /data/torrents:/data/torrents
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '6500:6500'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+  sonarr:
+    image: lscr.io/linuxserver/sonarr
+    container_name: sonarr
+    volumes:
+      - /root/services/jellyfin/sonarr:/config
+      - /data:/data
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    # ports:
+    #   - '8989:8989'
+    network_mode: service:jellyfin
+    restart: unless-stopped
+
+networks:
+  network_default:
+    external: true
+
+# gluetun:
+#   image: qmcgaw/gluetun
+#   container_name: gluetun
+#   volumes:
+#     - /root/services/gluetun:/gluetun
+#   environment:
+#     # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+#     - VPN_SERVICE_PROVIDER=nordvpn
+#     - VPN_TYPE=wireguard
+#     # Wireguard:
+#     - WIREGUARD_PRIVATE_KEY=${GLUETUN_WIREGUARD_PRIVATE_KEY}
+#     - SERVER_HOSTNAMES=${GLUETUN_SERVER_HOSTNAMES}
+#     # Timezone for accurate log times
+#     - TZ=${TZ}
+#     # Server list updater
+#     # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
+#     # - UPDATER_PERIOD=24h
+#     # Disable DNS over TLS
+#     # - DOT=off
+#     # - FIREWALL_VPN_INPUT_PORTS=6881,6969,51413
+#     # - FIREWALL_OUTBOUND_SUBNETS=0.0.0.0/0
+#     # - FIREWALL_DEBUG=on
+#   ports:
+#     - '5055:5055' # jellyseerr
+#     - '6767:6767' # bazarr
+#     - '6881:6881'
+#     - '6881:6881/udp'
+#     - '7878:7878' # radarr
+#     # - '8000:8000/tcp' # Build-in HTTP control header
+#     - '8085:8085' # qbittorrent
+#     - '8096:8096' # jellyfin
+#     # - '8388:8388/tcp' # Shadowsocks
+#     # - '8388:8388/udp' # Shadowsocks
+#     # - '8888:8888/tcp' # HTTP proxy
+#     - '8989:8989' # Sonarr
+#     - '9696:9696' # Prowlarr
+#   restart: always
+#   # networks:
+#   #   - vpn
+#   # healthcheck:
+#   #   test: ping -c 1 www.google.com || exit 1
+#   #   interval: 60s
+#   #   timeout: 20s
+#   #   retries: 5
+#   cap_add:
+#     - NET_ADMIN
+#   # devices:
+#   #   - /dev/net/tun:/dev/net/tun
+
+# qbittorrent:
+#   image: lscr.io/linuxserver/qbittorrent:libtorrentv1
+#   container_name: qbittorrent
+#   depends_on:
+#     gluetun:
+#       condition: service_healthy
+#   volumes:
+#     - /root/services/jellyfin/qbittorrent:/config
+#     - /data/torrents:/data/torrents
+#   environment:
+#     - PUID=${UID}
+#     - PGID=${GID}
+#     - TZ=${TZ}
+#     - WEBUI_PORT=8085
+#   # ports:
+#   #   - 8085:8085
+#   network_mode: 'service:gluetun'
+#   restart: always
+
+# sabnzbd:
+#   container_name: sabnzbd
+#   image: ghcr.io/hotio/sabnzbd
+#   restart: unless-stopped
+#   logging:
+#     driver: json-file
+#   environment:
+#     - PUID=1000
+#     - PGID=1000
+#     - TZ=Europe/Amsterdam
+#   ports:
+#     - 8080:8080
+#     - 9090:9090
+#   volumes:
+#     - /etc/localtime:/etc/localtime:ro
+#     - /root/services/jellyfin/sabnzbd:/config
+#     - /root/services/jellyfin/data/usenet:/data/usenet
