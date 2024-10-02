@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    volumes:
+      - /root/services/homeassistant/conifg:/config
+      - /run/dbus:/run/dbus:ro
+    ports:
+      - 8123:8123
+    networks:
+      - network_default
+    restart: unless-stopped
+    privileged: true
+networks:
+  network_default:
+    external: true

@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   networking.hostName = "urvi"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -11,7 +11,24 @@
   networking.networkmanager.enable = true;
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    ports = [ 22 ];
+    settings = {
+      PasswordAuthentication = true;
+      AllowUsers = [ "vineeth" "root" ];
+      UseDns = true;
+      X11Forwarding = true;
+      PermitRootLogin = "yes";
+      PubkeyAuthentication = true;
+    };
+  };
+
+  services.fail2ban.enable = true;
+
+  environment.systemPackages = with pkgs; [
+    openssl
+  ];
 
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 22 443 ];
